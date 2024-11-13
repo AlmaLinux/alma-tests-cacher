@@ -1,7 +1,9 @@
 import asyncio
 import json
 import logging
+import os.path
 import re
+import shutil
 import urllib.parse
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -284,10 +286,15 @@ class AlmaTestsCacher:
                     ],
                     repo.id,
                 )
+            try:
+                repo_dir.rmdir()
+            except:
+                pass
             self.logger.info('Repo "%s" is processed', repo.name)
 
     async def run(self, dry_run: bool = False):
         with TemporaryDirectory(prefix='alma-cacher-') as workdir:
+            tmp_path = workdir
             while True:
                 self.logger.info('Start processing test repositories')
                 try:
@@ -306,3 +313,5 @@ class AlmaTestsCacher:
                 await asyncio.sleep(self.sleep_timeout)
                 if dry_run:
                     break
+        if tmp_path is not None and os.path.exists(tmp_path):
+            shutil.rmtree(tmp_path)
