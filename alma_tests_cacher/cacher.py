@@ -4,7 +4,6 @@ import logging
 import re
 import urllib.parse
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import List, Optional, Union
 
 import aiohttp
@@ -14,6 +13,7 @@ from alma_tests_cacher.constants import (
     DEFAULT_LOGGING_LEVEL,
     DEFAULT_REQUESTS_LIMIT,
     DEFAULT_SLEEP_TIMEOUT,
+    DEFAULT_WORKDIR_PATH,
 )
 from alma_tests_cacher.models import PackageTestRepository, TestRepository
 from alma_tests_cacher.utils import (
@@ -32,6 +32,7 @@ class AlmaTestsCacher:
         bs_api_url: str = DEFAULT_BS_API_URL,
         logging_level: str = DEFAULT_LOGGING_LEVEL,
         gerrit_username: str = '',
+        workdir: Path = DEFAULT_WORKDIR_PATH,
     ):
         self.requests_limit = asyncio.Semaphore(requests_limit)
         self.sleep_timeout = sleep_timeout
@@ -43,6 +44,12 @@ class AlmaTestsCacher:
         self.session_mapping = {}
         self.logger = self.setup_logger(logging_level)
         self.gerrit_username = gerrit_username
+        self.workdir = self.create_workdir(workdir)
+
+    @staticmethod
+    def create_workdir(workdir) -> Path:
+        workdir.mkdir(parents=True, exist_ok=True)
+        return workdir
 
     @staticmethod
     def setup_logger(logging_level: str) -> logging.Logger:
@@ -163,7 +170,7 @@ class AlmaTestsCacher:
     async def process_repo(
         self,
         repo: TestRepository,
-        workdir: str,
+        workdir: Path,
     ):
         async with self.requests_limit:
             remote_test_folders = []
@@ -287,22 +294,21 @@ class AlmaTestsCacher:
             self.logger.info('Repo "%s" is processed', repo.name)
 
     async def run(self, dry_run: bool = False):
-        with TemporaryDirectory(prefix='alma-cacher-') as workdir:
-            while True:
-                self.logger.info('Start processing test repositories')
-                try:
-                    repos = await self.get_test_repositories()
-                    await asyncio.gather(
-                        *(self.process_repo(repo, workdir) for repo in repos)
-                    )
-                except Exception:
-                    self.logger.exception('Cannot process test repositories:')
-                finally:
-                    await self.close_sessions()
-                self.logger.info(
-                    'All repositories are processed, sleeping %d seconds',
-                    self.sleep_timeout,
+        while True:
+            self.logger.info('Start processing test repositories')
+            try:
+                repos = await self.get_test_repositories()
+                await asyncio.gather(
+                    *(self.process_repo(repo, self.workdir) for repo in repos)
                 )
-                await asyncio.sleep(self.sleep_timeout)
-                if dry_run:
-                    break
+            except Exception:
+                self.logger.exception('Cannot process test repositories:')
+            finally:
+                await self.close_sessions()
+            self.logger.info(
+                'All repositories are processed, sleeping %d seconds',
+                self.sleep_timeout,
+            )
+            await asyncio.sleep(self.sleep_timeout)
+            if dry_run:
+                break
