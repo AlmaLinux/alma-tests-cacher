@@ -250,8 +250,13 @@ class AlmaTestsCacher:
                 )
                 new_test_folders.append(new_test)
                 repo.packages.append(new_test)
+            test_folders_mapping = {
+                (test.folder_name, test.regex): test
+                for test in repo.packages
+                if test.regex
+            }
             for pattern, target_dir in compiled_test_rules:
-                existent_test = test_folders_mapping.get(target_dir)
+                existent_test = test_folders_mapping.get((target_dir, pattern))
                 if existent_test:
                     continue
                 new_test = PackageTestRepository(
