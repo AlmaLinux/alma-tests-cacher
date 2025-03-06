@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -8,6 +9,7 @@ from alma_tests_cacher.constants import (
     DEFAULT_LOGGING_LEVEL,
     DEFAULT_REQUESTS_LIMIT,
     DEFAULT_SLEEP_TIMEOUT,
+    DEFAULT_WORKDIR_PATH,
 )
 
 
@@ -45,3 +47,4 @@ class Config(BaseSettings):
     cacher_sentry_dsn: str = ""
     cacher_sentry_traces_sample_rate: float = 0.2
     gerrit_username: str = ""
+    workdir: Path = DEFAULT_WORKDIR_PATH

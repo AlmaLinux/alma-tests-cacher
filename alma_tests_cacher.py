@@ -20,6 +20,7 @@ async def main():
         bs_api_url=config.bs_api_url,
         bs_jwt_token=config.bs_jwt_token,
         gerrit_username=config.gerrit_username,
+        workdir=config.workdir,
     ).run()
 
 

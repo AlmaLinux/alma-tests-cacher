@@ -27,7 +27,7 @@ def prepare_gerrit_repo_url(url: str, username: str) -> str:
 
 
 def clone_git_repo(
-    workdir_path: str,
+    workdir_path: Path,
     repo_url: str,
 ) -> Tuple[int, str, str]:
     return (
