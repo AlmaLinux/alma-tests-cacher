@@ -29,13 +29,15 @@ def prepare_gerrit_repo_url(url: str, username: str) -> str:
 def clone_git_repo(
     workdir_path: Path,
     repo_url: str,
+    target_dir: Optional[str] = None,
 ) -> Tuple[int, str, str]:
+    args = ['clone', repo_url]
+    if target_dir:
+        args.append(target_dir)
     return (
         local['git']
         .with_cwd(workdir_path)
-        .run(
-            ['clone', repo_url],
-        )
+        .run(args)
     )
 
 
