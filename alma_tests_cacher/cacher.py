@@ -177,7 +177,8 @@ class AlmaTestsCacher:
             new_test_folders = []
             tests_prefix = repo.tests_prefix if repo.tests_prefix else ''
             self.logger.info('Start processing "%s" repo', repo.name)
-            repo_dirname = Path(repo.url).name.replace('.git', '')
+            repo_basename = Path(repo.url).name.replace('.git', '')
+            repo_dirname = f'{repo.id}-{repo_basename}'
             if 'gerrit' in repo.url:
                 repo.url = prepare_gerrit_repo_url(
                     repo.url,
@@ -188,7 +189,9 @@ class AlmaTestsCacher:
             if not repo_dir.exists():
                 self.logger.info('Start cloning git repo: %s', repo.url)
                 try:
-                    exit_code, stdout, stderr = clone_git_repo(workdir, repo.url)
+                    exit_code, stdout, stderr = clone_git_repo(
+                        workdir, repo.url, target_dir=repo_dirname,
+                    )
                 except Exception:
                     self.logger.exception('Cannot clone git repo:')
                     return
@@ -250,10 +253,7 @@ class AlmaTestsCacher:
                         '',
                         remote_test_folder,
                     ),
-                    url=urllib.parse.urljoin(
-                        urllib.parse.urljoin(repo.url, repo.tests_dir),
-                        remote_test_folder,
-                    ),
+                    url=f'{repo.tests_dir}{remote_test_folder}',
                 )
                 new_test_folders.append(new_test)
                 repo.packages.append(new_test)
@@ -269,10 +269,7 @@ class AlmaTestsCacher:
                 new_test = PackageTestRepository(
                     folder_name=target_dir,
                     package_name=pattern,
-                    url=urllib.parse.urljoin(
-                        urllib.parse.urljoin(repo.url, repo.tests_dir),
-                        target_dir,
-                    ),
+                    url=f'{repo.tests_dir}{target_dir}',
                     regex=pattern,
                 )
                 new_test_folders.append(new_test)

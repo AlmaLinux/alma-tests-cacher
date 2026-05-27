@@ -61,13 +61,13 @@ def expected_payload() -> Dict[str, Any]:
                 'id': None,
                 'package_name': 'chan',
                 'folder_name': 'p_chan',
-                'url': 'git@github.com:anfimovdm/rpm_tests/p_chan',
+                'url': 'rpm_tests/p_chan',
             },
             {
                 'id': None,
                 'package_name': 'common',
                 'folder_name': 'common',
-                'url': 'git@github.com:anfimovdm/rpm_tests/common',
+                'url': 'rpm_tests/common',
             },
         ],
     }
@@ -122,10 +122,10 @@ def mock_clone_git_repo(
     monkeypatch: pytest.MonkeyPatch,
     repo_payload: TestRepository,
 ):
-    def func(workdir: str, repo_url: str):
+    def func(workdir: str, repo_url: str, target_dir: str = None):
         tests_dir = Path(
             workdir,
-            repo_url.split('/')[-1].replace('.git', ''),
+            target_dir or repo_url.split('/')[-1].replace('.git', ''),
             repo_payload.tests_dir,
         )
         for i in range(1, 5):
